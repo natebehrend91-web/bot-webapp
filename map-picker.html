@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        #map { width: 100%; height: 100%; }
+        .info-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 8px 12px; font-size: 12px; text-align: center;
+            border-top: 1px solid var(--tg-theme-hint-color, #cccccc);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="info-bar" id="info">📍 Передвиньте карту и нажмите «Подтвердить»</div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.MainButton.setText('✅ Подтвердить').show();
+        tg.MainButton.color = '#2AABEE';
+        tg.expand();
+
+        // Центр — Москва по умолчанию
+        const defaultLat = 55.7558;
+        const defaultLon = 37.6173;
+        const defaultZoom = 13;
+
+        const map = L.map('map').setView([defaultLat, defaultLon], defaultZoom);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        const marker = L.marker([defaultLat, defaultLon], { draggable: true }).addTo(map);
+        
+        // Крестик в центре (прицел)
+        const crossIcon = L.divIcon({
+            className: 'cross-icon',
+            html: '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:24px;">'
+                + '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#2AABEE" stroke-width="2.5">'
+                + '<circle cx="12" cy="12" r="9" fill="rgba(42,171,238,0.15)"/>'
+                + '<line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/>'
+                + '</svg></div>',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+        
+        const centerMarker = L.marker([defaultLat, defaultLon], { icon: crossIcon, interactive: false }).addTo(map);
+
+        // Обновление маркеров при движении карты
+        function updatePosition() {
+            const center = map.getCenter();
+            marker.setLatLng(center);
+            centerMarker.setLatLng(center);
+        }
+
+        map.on('move', updatePosition);
+
+        // Тап по карте — мгновенное перемещение
+        map.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            centerMarker.setLatLng(e.latlng);
+            map.panTo(e.latlng);
+        });
+
+        // Кнопка подтверждения
+        tg.MainButton.onClick(function() {
+            const pos = marker.getLatLng();
+            tg.sendData(JSON.stringify({
+                action: 'map',
+                lat: pos.lat,
+                lon: pos.lng
+            }));
+            tg.close();
+        });
+
+        // Показываем координаты в инфо-баре при движении
+        map.on('moveend', function() {
+            const pos = marker.getLatLng();
+            document.getElementById('info').textContent = 
+                '📍 ' + pos.lat.toFixed(6) + ', ' + pos.lng.toFixed(6);
+        });
+    </script>
+</body>
+</html>
