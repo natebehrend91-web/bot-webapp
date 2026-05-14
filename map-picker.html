@@ -35,7 +35,7 @@
     <div id="map"></div>
     <div class="bottom-bar">
         <div class="coord-text" id="coordText">58.010500, 56.250200</div>
-        <button class="btn-confirm" id="btnConfirm">✅ Отправить координаты</button>
+        <button class="btn-confirm" id="btnConfirm">✅ Вставить в чат</button>
     </div>
 
     <script>
@@ -78,23 +78,8 @@
             const pos = marker.getLatLng();
             const coordText = pos.lat.toFixed(6) + ', ' + pos.lng.toFixed(6);
             
-            // Меняем текст кнопки
-            document.getElementById('btnConfirm').textContent = '⏳ Отправка...';
-            document.getElementById('btnConfirm').disabled = true;
-            
-            // Способ 1: пробуем sendData
-            tg.sendData(JSON.stringify({
-                action: 'map',
-                lat: pos.lat,
-                lon: pos.lng
-            }));
-            
-            // Способ 2 (запасной): если sendData не сработает,
-            // отправляем координаты текстом через switchInlineQuery
-            // сработает только если бот разрешает inline
-            setTimeout(function() {
-                tg.close();
-            }, 500);
+            // Вставляем координаты в поле ввода чата с ботом
+            tg.switchInlineQuery(coordText, ['users']);
         });
 
         updateCoords();
