@@ -12,10 +12,8 @@
         #map { width: 100%; height: calc(100% - 60px); }
         .bottom-bar {
             position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
-            background: var(--tg-theme-bg-color, #ffffff);
-            display: flex; align-items: center; justify-content: center;
-            border-top: 1px solid var(--tg-theme-hint-color, #cccccc);
-            z-index: 1000; gap: 10px; padding: 8px;
+            background: #ffffff; display: flex; align-items: center; justify-content: center;
+            border-top: 1px solid #cccccc; z-index: 1000; gap: 10px; padding: 8px;
         }
         .btn-confirm {
             flex: 1; height: 44px; background: #2AABEE; color: white;
@@ -38,26 +36,23 @@
     </div>
 
     <script>
-        // Инициализация Telegram WebApp
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
 
-        // Центр — Пермь
         const defaultLat = 58.0105;
         const defaultLon = 56.2502;
         const defaultZoom = 13;
 
-        const map = L.map('map').setView([defaultLat, defaultLon], defaultZoom);
+        const map = L.map('map', { zoomControl: true }).setView([defaultLat, defaultLon], defaultZoom);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap',
+            attribution: '',
             maxZoom: 19
         }).addTo(map);
 
         const marker = L.marker([defaultLat, defaultLon], { draggable: true }).addTo(map);
 
-        // Крестик в центре
         const crossIcon = L.divIcon({
             className: 'cross-icon',
             html: '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:24px;">'
@@ -75,35 +70,31 @@
             const center = map.getCenter();
             marker.setLatLng(center);
             centerMarker.setLatLng(center);
-            document.getElementById('coords').textContent = 
-                '📍 ' + center.lat.toFixed(6) + ', ' + center.lng.toFixed(6);
+            document.getElementById('coords').textContent = '📍 ' + center.lat.toFixed(6) + ', ' + center.lng.toFixed(6);
         }
 
         map.on('move', updatePosition);
-
         map.on('click', function(e) {
             marker.setLatLng(e.latlng);
             centerMarker.setLatLng(e.latlng);
             map.panTo(e.latlng);
         });
 
-        // Кнопка «Подтвердить»
         document.getElementById('btnConfirm').addEventListener('click', function() {
             const pos = marker.getLatLng();
-            const payload = JSON.stringify({
-                action: 'map',
-                lat: pos.lat,
-                lon: pos.lng
-            });
+            const payload = JSON.stringify({ action: 'map', lat: pos.lat, lon: pos.lng });
             
-            // Отправляем данные в бота
-            tg.sendData(payload);
+            // Пробуем через sendData
+            try {
+                tg.sendData(payload);
+            } catch(e) {
+                alert('Ошибка sendData: ' + e.message);
+            }
             
             // Закрываем Mini App
             tg.close();
         });
 
-        // Начальное отображение координат
         updatePosition();
     </script>
 </body>
