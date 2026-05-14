@@ -38,21 +38,10 @@
     </div>
 
     <script>
-        // Telegram WebApp
-        let tg = null;
-        try {
-            if (window.Telegram && window.Telegram.WebApp) {
-                tg = window.Telegram.WebApp;
-                tg.ready();
-                tg.expand();
-                // Пробуем показать главную кнопку тоже
-                tg.MainButton.setText('✅ Подтвердить').show();
-                tg.MainButton.color = '#2AABEE';
-                tg.MainButton.onClick(sendData);
-            }
-        } catch(e) {
-            console.log('Не в Telegram');
-        }
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
         // Центр — Пермь
         const defaultLat = 58.0105;
@@ -98,10 +87,8 @@
             map.panTo(e.latlng);
         });
 
-        // Кнопка «Подтвердить» — своя, не зависит от Telegram API
-        document.getElementById('btnConfirm').addEventListener('click', sendData);
-
-        function sendData() {
+        // Кнопка «Подтвердить»
+        document.getElementById('btnConfirm').addEventListener('click', function() {
             const pos = marker.getLatLng();
             const payload = JSON.stringify({
                 action: 'map',
@@ -109,14 +96,12 @@
                 lon: pos.lng
             });
             
-            if (tg && tg.sendData) {
-                tg.sendData(payload);
-                tg.close();
-            } else {
-                // Если не в Telegram — покажем алерт для отладки
-                alert('Координаты: ' + pos.lat.toFixed(6) + ', ' + pos.lng.toFixed(6));
-            }
-        }
+            // Отправляем данные в бота
+            tg.sendData(payload);
+            
+            // Закрываем Mini App
+            tg.close();
+        });
 
         // Начальное отображение координат
         updatePosition();
