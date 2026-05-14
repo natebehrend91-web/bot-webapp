@@ -29,13 +29,18 @@
             background: #f0f0f0; padding: 8px 12px; border-radius: 8px;
             width: 100%; max-width: 300px;
         }
+        .copied-text {
+            display: none; font-size: 13px; color: #00B894; text-align: center;
+            font-weight: 600; margin-top: 2px;
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
     <div class="bottom-bar">
         <div class="coord-text" id="coordText">58.010500, 56.250200</div>
-        <button class="btn-confirm" id="btnConfirm">✅ Вставить в чат</button>
+        <button class="btn-confirm" id="btnConfirm">📋 Скопировать координаты</button>
+        <div class="copied-text" id="copiedText">✅ Скопировано! Вставьте в чат (Ctrl+V)</div>
     </div>
 
     <script>
@@ -75,11 +80,28 @@
         });
 
         document.getElementById('btnConfirm').addEventListener('click', function() {
-            const pos = marker.getLatLng();
-            const coordText = pos.lat.toFixed(6) + ', ' + pos.lng.toFixed(6);
+            const coordText = document.getElementById('coordText').textContent;
             
-            // Вставляем координаты в поле ввода чата с ботом
-            tg.switchInlineQuery(coordText, ['users']);
+            // Копируем в буфер обмена
+            navigator.clipboard.writeText(coordText).then(function() {
+                // Показываем подтверждение
+                document.getElementById('btnConfirm').style.display = 'none';
+                document.getElementById('copiedText').style.display = 'block';
+                
+                // Закрываем Mini App через 1 секунду
+                setTimeout(function() {
+                    tg.close();
+                }, 1000);
+            }).catch(function() {
+                // Запасной вариант — выделяем текст для ручного копирования
+                const range = document.createRange();
+                range.selectNode(document.getElementById('coordText'));
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                
+                document.getElementById('btnConfirm').textContent = '⚠️ Нажмите "Копировать"';
+                document.getElementById('btnConfirm').style.background = '#E17055';
+            });
         });
 
         updateCoords();
