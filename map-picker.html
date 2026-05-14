@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,11 +25,19 @@
     <div class="info-bar" id="info">📍 Передвиньте карту и нажмите «Подтвердить»</div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.MainButton.setText('✅ Подтвердить').show();
-        tg.MainButton.color = '#2AABEE';
-        tg.expand();
+        // Защита от открытия вне Telegram
+        let tg = null;
+        try {
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg = window.Telegram.WebApp;
+                tg.ready();
+                tg.MainButton.setText('✅ Подтвердить').show();
+                tg.MainButton.color = '#2AABEE';
+                tg.expand();
+            }
+        } catch(e) {
+            console.log('Не в Telegram — работаем в браузере');
+        }
 
         // Центр — Москва по умолчанию
         const defaultLat = 55.7558;
@@ -75,22 +83,26 @@
             map.panTo(e.latlng);
         });
 
-        // Кнопка подтверждения
-        tg.MainButton.onClick(function() {
-            const pos = marker.getLatLng();
-            tg.sendData(JSON.stringify({
-                action: 'map',
-                lat: pos.lat,
-                lon: pos.lng
-            }));
-            tg.close();
-        });
+        // Кнопка подтверждения (только в Telegram)
+        if (tg) {
+            tg.MainButton.onClick(function() {
+                const pos = marker.getLatLng();
+                tg.sendData(JSON.stringify({
+                    action: 'map',
+                    lat: pos.lat,
+                    lon: pos.lng
+                }));
+                tg.close();
+            });
+        }
 
         // Показываем координаты в инфо-баре при движении
         map.on('moveend', function() {
             const pos = marker.getLatLng();
-            document.getElementById('info').textContent = 
-                '📍 ' + pos.lat.toFixed(6) + ', ' + pos.lng.toFixed(6);
+            const infoEl = document.getElementById('info');
+            if (infoEl) {
+                infoEl.textContent = '📍 ' + pos.lat.toFixed(6) + ', ' + pos.lng.toFixed(6);
+            }
         });
     </script>
 </body>
