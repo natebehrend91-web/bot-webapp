@@ -84,8 +84,14 @@
             const pos = marker.getLatLng();
             const data = JSON.stringify({ action: 'map', lat: pos.lat, lon: pos.lng });
             
-            // Способ 1: sendData
+            document.getElementById('btnConfirm').textContent = '⏳ Отправка...';
+            document.getElementById('btnConfirm').disabled = true;
+            
             tg.sendData(data);
+            
+            setTimeout(function() {
+                tg.close();
+            }, 300);
         });
 
         updatePosition();
