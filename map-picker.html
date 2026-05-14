@@ -82,17 +82,10 @@
 
         document.getElementById('btnConfirm').addEventListener('click', function() {
             const pos = marker.getLatLng();
-            const payload = JSON.stringify({ action: 'map', lat: pos.lat, lon: pos.lng });
+            const data = JSON.stringify({ action: 'map', lat: pos.lat, lon: pos.lng });
             
-            // Пробуем через sendData
-            try {
-                tg.sendData(payload);
-            } catch(e) {
-                alert('Ошибка sendData: ' + e.message);
-            }
-            
-            // Закрываем Mini App
-            tg.close();
+            // Способ 1: sendData
+            tg.sendData(data);
         });
 
         updatePosition();
